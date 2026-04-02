@@ -33,7 +33,7 @@ Place in `/var/lisa/apps/{appId}/appMCP.json`:
   "tools": [
     {
       "name": "search",
-      "description": "콘텐츠 검색",
+      "description": "Search content",
       "inputSchema": {
         "type": "object",
         "properties": { "query": { "type": "string" } },
@@ -49,7 +49,8 @@ Place in `/var/lisa/apps/{appId}/appMCP.json`:
 ```yaml
 dependencies:
   lisa_appmcp_flutter_sdk:
-    path: ../packages/lisa_appmcp_flutter_sdk  # or git URL
+    git:
+      url: https://github.com/rordd/lisa-appmcp-flutter-sdk.git
 ```
 
 ### 3. Register tools and connect
@@ -61,7 +62,7 @@ final client = LisaMcpClient(LisaMcpConfig(appId: 'com.myapp'));
 
 client.registerTool(McpToolDef(
   name: 'search',
-  description: '콘텐츠 검색',
+  description: 'Search content',
   inputSchema: {
     'type': 'object',
     'properties': {'query': {'type': 'string'}},

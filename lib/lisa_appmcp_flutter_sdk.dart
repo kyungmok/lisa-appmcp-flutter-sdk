@@ -9,7 +9,7 @@
 ///
 /// client.registerTool(McpToolDef(
 ///   name: 'search',
-///   description: '콘텐츠 검색',
+///   description: 'Search content',
 ///   inputSchema: {
 ///     'type': 'object',
 ///     'properties': {'query': {'type': 'string'}},
