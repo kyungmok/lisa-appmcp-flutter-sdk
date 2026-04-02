@@ -1,0 +1,53 @@
+{
+  "appId": "com.webos.app.recipe",
+  "name": "Recipe",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "search_recipe",
+      "description": "레시피 검색. 재료나 요리 이름으로 검색 가능.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "검색어 (재료명 또는 요리명)"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "get_steps",
+      "description": "레시피 조리 단계 조회. recipeId로 상세 조리법 반환.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recipeId": {
+            "type": "string",
+            "description": "레시피 ID"
+          }
+        },
+        "required": ["recipeId"]
+      }
+    },
+    {
+      "name": "set_timer",
+      "description": "요리 타이머 설정. 분 단위.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "description": "타이머 시간 (분)"
+          },
+          "label": {
+            "type": "string",
+            "description": "타이머 라벨 (예: '파스타 삶기')"
+          }
+        },
+        "required": ["minutes"]
+      }
+    }
+  ]
+}

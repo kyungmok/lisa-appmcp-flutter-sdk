@@ -1,0 +1,13 @@
+name: lisa_appmcp_flutter_sdk
+description: Flutter/Dart SDK for integrating app AI tools with Lisa via MCP protocol.
+version: 0.1.0
+homepage: https://github.com/rordd/lisa
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  web_socket_channel: ^3.0.0
+
+dev_dependencies:
+  test: ^1.24.0
