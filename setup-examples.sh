@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # setup-examples.sh — Build and deploy example Flutter apps to appmcp apps-dir.
 #
+# Prerequisites (install once via onboard.sh or manually):
+#   sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev
+#   sudo snap install flutter --classic
+#
 # Usage:
 #   ./setup-examples.sh              # Build + deploy all examples
-#   ./setup-examples.sh --deps-only  # Install dependencies only
 #   ./setup-examples.sh recipe_app   # Build + deploy specific example
 set -euo pipefail
 
@@ -21,43 +24,32 @@ info()  { echo -e "${GREEN}[✓]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[!]${NC} $*"; }
 error() { echo -e "${RED}[✗]${NC} $*" >&2; }
 
-# ─── Step 1: Install dependencies ───
-install_deps() {
-    echo ""
-    echo "=== Step 1: Dependencies ==="
+# ─── Preflight check ───
+preflight() {
+    local ok=true
 
-    # Linux build dependencies
-    local missing=()
-    for pkg in clang cmake ninja-build pkg-config libgtk-3-dev; do
-        if ! dpkg -s "$pkg" &>/dev/null; then
-            missing+=("$pkg")
+    if ! command -v flutter &>/dev/null; then
+        error "flutter not found. Install: sudo snap install flutter --classic"
+        ok=false
+    fi
+
+    for cmd in clang cmake ninja; do
+        if ! command -v "$cmd" &>/dev/null; then
+            error "$cmd not found. Install: sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev"
+            ok=false
+            break
         fi
     done
 
-    if [ ${#missing[@]} -gt 0 ]; then
-        warn "Installing missing packages: ${missing[*]}"
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq "${missing[@]}"
-        info "Linux build dependencies installed"
-    else
-        info "Linux build dependencies OK"
+    if [ "$ok" = false ]; then
+        exit 1
     fi
 
-    # Flutter SDK
-    if ! command -v flutter &>/dev/null; then
-        warn "Flutter not found. Installing via snap..."
-        sudo snap install flutter --classic
-        flutter config --enable-linux-desktop
-        info "Flutter installed"
-    else
-        info "Flutter $(flutter --version 2>/dev/null | head -1 | awk '{print $2}') OK"
-    fi
-
-    # Enable linux desktop if not already
     flutter config --enable-linux-desktop 2>/dev/null || true
+    info "Prerequisites OK"
 }
 
-# ─── Step 2: Build an example app ───
+# ─── Build an example app ───
 build_app() {
     local app_dir="$1"
     local app_name
@@ -78,7 +70,7 @@ build_app() {
     cd "$SCRIPT_DIR"
 }
 
-# ─── Step 3: Deploy to apps-dir ───
+# ─── Deploy to apps-dir ───
 deploy_app() {
     local app_dir="$1"
     local app_name
@@ -127,14 +119,7 @@ RUNEOF
 
 # ─── Main ───
 main() {
-    if [ "${1:-}" = "--deps-only" ]; then
-        install_deps
-        echo ""
-        info "Dependencies ready. Run again without --deps-only to build."
-        exit 0
-    fi
-
-    install_deps
+    preflight
 
     # Determine which apps to build
     local targets=()
