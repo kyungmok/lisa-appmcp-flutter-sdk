@@ -26,23 +26,43 @@ error() { echo -e "${RED}[✗]${NC} $*" >&2; }
 
 # ─── Preflight check ───
 preflight() {
-    local ok=true
-
-    if ! command -v flutter &>/dev/null; then
-        error "flutter not found. Install: sudo snap install flutter --classic"
-        ok=false
-    fi
+    local need_apt=false
+    local need_flutter=false
 
     for cmd in clang cmake ninja; do
         if ! command -v "$cmd" &>/dev/null; then
-            error "$cmd not found. Install: sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev"
-            ok=false
+            need_apt=true
             break
         fi
     done
 
-    if [ "$ok" = false ]; then
-        exit 1
+    if ! command -v flutter &>/dev/null; then
+        need_flutter=true
+    fi
+
+    if [ "$need_apt" = true ]; then
+        warn "Missing build dependencies: clang cmake ninja-build pkg-config libgtk-3-dev"
+        read -rp "  Install now? (y/n) " ans
+        if [[ "$ans" =~ ^[Yy] ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+            info "Build dependencies installed"
+        else
+            error "Cannot proceed without build dependencies"
+            exit 1
+        fi
+    fi
+
+    if [ "$need_flutter" = true ]; then
+        warn "Flutter SDK not found"
+        read -rp "  Install via snap? (y/n) " ans
+        if [[ "$ans" =~ ^[Yy] ]]; then
+            sudo snap install flutter --classic
+            info "Flutter installed"
+        else
+            error "Cannot proceed without Flutter"
+            exit 1
+        fi
     fi
 
     flutter config --enable-linux-desktop 2>/dev/null || true
