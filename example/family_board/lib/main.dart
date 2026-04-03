@@ -200,12 +200,15 @@ class _BoardScreenState extends State<BoardScreen> {
       },
       handler: (args) async {
         final forPerson = args['for'] as String?;
+        final isAll = forPerson == null ||
+            forPerson.isEmpty ||
+            const {'all', '모두', '전체'}.contains(forPerson.toLowerCase());
         var filtered = _memos.toList();
-        if (forPerson != null && forPerson.isNotEmpty) {
+        if (!isAll) {
           filtered = _memos
               .where((m) =>
                   m.to == '모두' ||
-                  m.to.contains(forPerson) ||
+                  m.to.contains(forPerson!) ||
                   m.from.contains(forPerson))
               .toList();
         }
