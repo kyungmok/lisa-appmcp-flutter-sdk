@@ -2,6 +2,9 @@
   "appId": "com.webos.app.recipe",
   "name": "Recipe",
   "version": "1.0.0",
+  "params": {
+    "display": "fullscreen"
+  },
   "tools": [
     {
       "name": "search_recipe",

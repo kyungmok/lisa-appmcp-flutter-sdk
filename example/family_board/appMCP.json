@@ -2,6 +2,9 @@
   "appId": "com.webos.app.familyboard",
   "name": "Family Board",
   "version": "1.0.0",
+  "params": {
+    "display": "fullscreen"
+  },
   "tools": [
     {
       "name": "post_memo",
