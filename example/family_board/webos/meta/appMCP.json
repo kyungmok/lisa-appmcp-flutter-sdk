@@ -1,0 +1,45 @@
+{
+  "appId": "com.webos.app.familyboard",
+  "name": "Family Board",
+  "version": "1.0.0",
+  "params": {
+    "display": "fullscreen"
+  },
+  "tools": [
+    {
+      "name": "post_memo",
+      "description": "가족 게시판에 메모 남기기. 누가 누구에게 남기는지 지정 가능.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "description": "메모 내용" },
+          "from": { "type": "string", "description": "보내는 사람" },
+          "to": { "type": "string", "description": "받는 사람 (생략 시 모두)" },
+          "pin": { "type": "boolean", "description": "중요 메모 고정" }
+        },
+        "required": ["message", "from"]
+      }
+    },
+    {
+      "name": "read_memos",
+      "description": "가족 게시판 메모 조회. 특정 사람 대상 또는 전체.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "for": { "type": "string", "description": "특정 사람 대상 메모만 조회" }
+        }
+      }
+    },
+    {
+      "name": "delete_memo",
+      "description": "메모 삭제.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "memoId": { "type": "string", "description": "삭제할 메모 ID" }
+        },
+        "required": ["memoId"]
+      }
+    }
+  ]
+}
