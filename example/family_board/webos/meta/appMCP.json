@@ -32,7 +32,7 @@
     },
     {
       "name": "delete_memo",
-      "description": "메모 삭제.",
+      "description": "가족 게시판 메모 삭제",
       "inputSchema": {
         "type": "object",
         "properties": {
