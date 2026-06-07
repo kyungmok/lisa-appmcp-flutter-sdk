@@ -43,15 +43,24 @@ if [ ! -f "$IPK" ]; then
   exit 1
 fi
 
-# Resolve ssh host/port from the ares device entry (e.g. prisoner@192.168.0.6:9922)
-DEV_INFO="$(ares-setup-device --list 2>/dev/null \
-  | awk -v alias="$TV_ALIAS" '$1==alias { print $2 }')"
-if [ -z "$DEV_INFO" ]; then
-  echo "Could not find ares device '$TV_ALIAS'. Registered devices:" >&2
-  ares-setup-device --list >&2
-  exit 1
+# Resolve the TV's IP. If the arg is already an IP (or TV_HOST is set), use it
+# directly — no ares registration needed. Otherwise look it up by ares alias
+# (e.g. prisoner@192.168.0.6:9922 → 192.168.0.6).
+if [ -n "${TV_HOST:-}" ]; then
+  HOST="$TV_HOST"
+elif printf '%s' "$TV_ALIAS" | grep -qE '^[0-9]+(\.[0-9]+){3}$'; then
+  HOST="$TV_ALIAS"
+else
+  DEV_INFO="$(ares-setup-device --list 2>/dev/null \
+    | awk -v alias="$TV_ALIAS" '$1==alias { print $2 }')"
+  if [ -z "$DEV_INFO" ]; then
+    echo "Could not find ares device '$TV_ALIAS'. Registered devices:" >&2
+    ares-setup-device --list >&2
+    echo "Tip: pass the IP directly, e.g. $0 192.168.0.37" >&2
+    exit 1
+  fi
+  HOST="${DEV_INFO#*@}"; HOST="${HOST%%:*}"
 fi
-HOST="${DEV_INFO#*@}"; HOST="${HOST%%:*}"
 
 # Manual install needs root (write /media/cryptofs/apps, run luna-send). Use
 # the TV's root sshd on port 22 — NOT the ares dev account on 9922. This is
@@ -104,9 +113,15 @@ $SSH "$SSH_TARGET" "
   :
 " || true
 
-echo "[5/5] Launching $APP_ID on $TV_ALIAS"
-ares-launch --device "$TV_ALIAS" "$APP_ID" || \
-  $SSH "$SSH_TARGET" "luna-send -n 1 -f luna://com.webos.service.applicationManager/launch '{\"id\":\"$APP_ID\"}'"
+echo "[5/5] Launching $APP_ID on $HOST"
+# Prefer ares-launch when the target is a registered alias; for a bare IP (not
+# in ares) go straight to luna-send over root ssh.
+if printf '%s' "$TV_ALIAS" | grep -qvE '^[0-9]+(\.[0-9]+){3}$' && [ -z "${TV_HOST:-}" ]; then
+  ares-launch --device "$TV_ALIAS" "$APP_ID" 2>/dev/null || \
+    $SSH "$SSH_TARGET" "luna-send -n 1 -f luna://com.webos.service.applicationManager/launch '{\"id\":\"$APP_ID\"}'" || true
+else
+  $SSH "$SSH_TARGET" "luna-send -n 1 -f luna://com.webos.service.applicationManager/launch '{\"id\":\"$APP_ID\"}'" || true
+fi
 
 echo
 echo "Done. NEXT: restart the TV's Lisa daemon / appmcp-server so it"
