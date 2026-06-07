@@ -43,9 +43,11 @@ if [ ! -f "$IPK" ]; then
   exit 1
 fi
 
-# Resolve the TV's IP. If the arg is already an IP (or TV_HOST is set), use it
-# directly — no ares registration needed. Otherwise look it up by ares alias
-# (e.g. prisoner@192.168.0.6:9922 → 192.168.0.6).
+# Resolve the TV's IP (and ssh port). If the arg is already an IP (or TV_HOST
+# is set), use it directly — no ares registration needed. Otherwise look it up
+# by ares alias (e.g. root@10.157.70.84:2293 → host 10.157.70.84, port 2293),
+# which also covers a port-forwarded demo fleet sharing one public IP.
+ARES_PORT=""
 if [ -n "${TV_HOST:-}" ]; then
   HOST="$TV_HOST"
 elif printf '%s' "$TV_ALIAS" | grep -qE '^[0-9]+(\.[0-9]+){3}$'; then
@@ -60,13 +62,18 @@ else
     exit 1
   fi
   HOST="${DEV_INFO#*@}"; HOST="${HOST%%:*}"
+  ARES_USER="${DEV_INFO%%@*}"
+  # Only adopt the ares port when its user is root — then that port IS the root
+  # sshd (e.g. a port-forwarded demo fleet, root@IP:2293). For a dev account
+  # like prisoner@IP:9922 the port is the dev port, not root's, so ignore it.
+  case "$DEV_INFO" in *:*) [ "$ARES_USER" = root ] && ARES_PORT="${DEV_INFO##*:}" ;; esac
 fi
 
-# Manual install needs root (write /media/cryptofs/apps, run luna-send). Use
-# the TV's root sshd on port 22 — NOT the ares dev account on 9922. This is
-# the same path the a2ui reference install uses successfully.
+# Manual install needs root (write /media/cryptofs/apps, run luna-send). The
+# install always goes over the TV's root sshd. Port precedence: explicit
+# SSH_PORT env > root-port parsed from the ares alias > 22.
 SSH_USER="${SSH_USER:-root}"
-SSH_PORT="${SSH_PORT:-22}"
+if [ -n "${SSH_PORT:-}" ]; then :; elif [ -n "$ARES_PORT" ]; then SSH_PORT="$ARES_PORT"; else SSH_PORT=22; fi
 SSH_TARGET="$SSH_USER@$HOST"
 SSH="ssh -o ConnectTimeout=8 -p $SSH_PORT"
 SCP="scp -q -P $SSH_PORT"
