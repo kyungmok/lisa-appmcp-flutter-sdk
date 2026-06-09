@@ -7,17 +7,19 @@
 #   mode"). familyboard keeps the com.webos.app.* id to match its appMCP.json
 #   / Linux deployment, so we unpack the IPK straight into SAM's store path.
 #
-# Unlike the a2ui reference this app uses NO voice ACG, so there are NO
-# luna-perms / ls-hubd steps — just the app payload.
-#
 # Steps:
 #   1. Extract IPK locally (ar + tar)
 #   2. Push data tarball to TV -> unpack into /media/cryptofs/apps/
 #      (SAM "store" path; persists across reboot, scanned by appmcp-server
 #       via --apps-dir /media/cryptofs/apps/usr/palm/applications)
-#   3. Close any running instance (luna-send closeByAppId + hard kill)
-#   4. ares-launch the app (optional sanity launch; appmcp-server also
-#      launches it on-demand via luna://.../applicationManager/launch)
+#   3. Deploy LS2 role/client-perms/manifest to /var/luna-service2 + HUP
+#      ls-hubd. REQUIRED: a manual tar-copy bypasses appinstalld, which would
+#      otherwise auto-generate the app's LS2 role. Without it the webOS Flutter
+#      embedder's WebOSServiceBridge fails to register and the app aborts
+#      (SIGABRT) at startup, before any Dart runs. Do NOT remove this step.
+#   4. Close any running instance (luna-send closeByAppId + hard kill)
+#   5. Launch the app (ares-launch for a registered alias, else luna-send over
+#      root ssh; appmcp-server also launches it on-demand)
 #
 # After installing, RESTART the TV's Lisa daemon / appmcp-server so it
 # rescans the apps dir and registers familyboard's 3 tools.
